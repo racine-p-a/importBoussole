@@ -20,13 +20,14 @@ foreach ($contenuParse['values'] as $MDM) {
         'geoCoord'=>'{"lon":"' . round($MDM['x_wgs84'], 4) . '","lat":"' . round($MDM['y_wgs84'], 4) . '"}',
         'email'=>$MDM['courriel'],
         'telephone'=>$MDM['telephone'],
+        'hours'=>getHoraires($MDM),
         'liaisonFileUrl'=>''
         )
     );
     $MDMCourante->inscrireMDMEnBase();
 }
 
-
+/*
 // Table des structures partenaires
 require_once 'ModelePartenaire.class.php';
 require_once 'BigFileIterator.class.php';
@@ -131,11 +132,47 @@ foreach ($iterator as $line) {
                     "validated"=>1,
                 );
                 //var_dump($donnees);
-                //$partenaireCourant = new ModelePartenaire($donnees);
-                //$partenaireCourant->inscrirePartenaireEnBase();
+                $partenaireCourant = new ModelePartenaire($donnees);
+                $partenaireCourant->inscrirePartenaireEnBase();
             }
         }
     }
 }
 
 echo $compteurAsso;
+*/
+
+
+function getHoraires($mdm) {
+    // [{"name":"Lundi","hours":[{"start":"01:01","end":"02:01","type":"phone"}],"open":true}]
+    $horaires = '[';
+
+    // Lundi
+    $horaires .= '{"name":"Lundi","hours":[' . getChampHoraires($mdm, 'lundi_am') .',' . getChampHoraires($mdm, 'lundi_pm') . '],"open":true}';
+    // Mardi
+    $horaires .= '{"name":"Mardi","hours":[' . getChampHoraires($mdm, 'mardi_am') .',' . getChampHoraires($mdm, 'mardi_pm') . '],"open":true}';
+    // Mercredi
+    $horaires .= '{"name":"Mercredi","hours":[' . getChampHoraires($mdm, 'mercredi_am') .',' . getChampHoraires($mdm, 'mercredi_pm') . '],"open":true}';
+    // Jeudi
+    $horaires .= '{"name":"Jeudi","hours":[' . getChampHoraires($mdm, 'jeudi_am') .',' . getChampHoraires($mdm, 'jeudi_pm') . '],"open":true}';
+    // Vendredi
+    $horaires .= '{"name":"Vendredi","hours":[' . getChampHoraires($mdm, 'vendredi_am') .',' . getChampHoraires($mdm, 'vendredi_pm') . '],"open":true}';
+
+
+    return $horaires . ']';
+}
+
+function getChampHoraires($mdm, $plageHoraire) {
+    // {"start":"01:01","end":"02:01","type":"appointment"}
+    $champHoraire = '{"start":"';
+    $donneesHoraire = $mdm[$plageHoraire];
+    $donneesHoraire = explode('-', $donneesHoraire);
+    if (count($donneesHoraire) < 2) {
+        return '';
+    }
+    $depart = str_replace('h', ':', $donneesHoraire[0]);
+    $fin    = str_replace('h', ':', $donneesHoraire[1]);
+    $champHoraire .= $depart . '","end":"' . $fin . '","type":"appointment"}';
+    return $champHoraire;
+
+}
